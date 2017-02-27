@@ -15,7 +15,7 @@ function setCityHTML(input){
 
 //Displays a citys name given longitude and latitude
 function setCityName(lat,long){
-	var url = 'http://maps.googleapis.com/maps/api/geocode/json?latlng='+lat+','+long+'&language=en',
+	var url = 'https://maps.googleapis.com/maps/api/geocode/json?latlng='+lat+','+long+'&language=en',
 		promiseLocation = $.getJSON(url)
 	promiseLocation.then(getCityName)
 
