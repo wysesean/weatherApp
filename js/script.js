@@ -304,6 +304,7 @@ var Router = Backbone.Router.extend({
 		setDaily(latitude, longitude)
 	},
 	displayError: function(){
+		document.querySelector('#weatherContainer') = ''
 		setCityHTML("Couldn't Find Location!")
 	},
 	displayDefault: function(){
