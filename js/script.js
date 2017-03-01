@@ -196,7 +196,7 @@ function makeLocationPromise(place){
 	var inputNode = document.querySelector('#inputText'),
 		cityNameNode = document.querySelector('#cityName')
 
-	var url = "http://maps.googleapis.com/maps/api/geocode/json?address="+place,
+	var url = "https://maps.googleapis.com/maps/api/geocode/json?address="+place,
 		promiseLocation = $.getJSON(url)
 	inputNode.value= ''
 	promiseLocation.then(setCityHTMLHash).then(displayBackground(place))
