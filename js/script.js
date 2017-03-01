@@ -16,8 +16,11 @@ function setCityHTML(input){
 //Displays a citys name given longitude and latitude
 function setCityName(lat,long){
 	var url = 'https://maps.googleapis.com/maps/api/geocode/json?latlng='+lat+','+long+'&language=en',
-		promiseLocation = $.getJSON(url)
+		promiseLocation = $.getJSON(url),
+		imgContainerNode = document.querySelector('#imgContainer')
+
 	promiseLocation.then(getCityName)
+
 
 	function formatCityName(str){
 		var strArr = str.split(',')
@@ -28,12 +31,16 @@ function setCityName(lat,long){
 		for(var i = 0; i<apiResponse.results.length; i++){
 			if(apiResponse.results[i].types[0] === 'locality'){
 				setCityHTML(formatCityName(apiResponse.results[i]['formatted_address']))
-				makeBgPromises(formatCityName(apiResponse.results[i]['formatted_address']))
+				if(imgContainerNode.innerHTML==''){
+					displayBackground(formatCityName(apiResponse.results[i]['formatted_address']))
+				}
 				return
 			}
 			else if(apiResponse.results[i].types[0] === 'administrative_area_level_1'){
 				setCityHTML(formatCityName(apiResponse.results[i]['formatted_address']))
-				makeBgPromises(formatCityName(apiResponse.results[i]['formatted_address']))
+				if(imgContainerNode.innerHTML==''){
+					displayBackground(formatCityName(apiResponse.results[i]['formatted_address']))
+				}
 				return
 			}
 		}
@@ -41,7 +48,9 @@ function setCityName(lat,long){
 			for(var j=0; j<apiResponse.results[i]['address_components'].length; j++){
 				if(apiResponse.results[i]['address_components'][j].types[0] === 'administrative_area_level_1'){
 					setCityHTML(formatCityName(apiResponse.results[i]['address_components'][j]['long_name']))
-					makeBgPromises(formatCityName(apiResponse.results[i]['address_components'][j]['long_name']))
+					if(imgContainerNode.innerHTML==''){
+						displayBackground(formatCityName(apiResponse.results[i]['address_components'][j]['long_name']))
+					}
 					return
 				}
 			}
@@ -97,13 +106,13 @@ function translateIcon(iconStr){
 
 //////////MAKE PROMISES and SET////////
 	//-Creates the promises for location that is passed in
-function makeCurrentPromise(lat, long){
+function setCurrent(lat, long){
 	var url = 'https://api.darksky.net/forecast/'+darkSkyKey+'/'+ lat + ','+ long+'?exclude=[minutely,hourly,daily,alerts,flags]&callback=?'
 	var promiseCurrent = $.getJSON(url)
-	promiseCurrent.then(setCurrentTemp)
+	promiseCurrent.then(setCurrentHTML)
 
 	//displays the current temperature in the container
-	function setCurrentTemp(apiResponse){
+	function setCurrentHTML(apiResponse){
 		hideLoader()
 		var currentHTML = '',
 			weatherNode = document.querySelector('#weatherContainer')
@@ -117,22 +126,20 @@ function makeCurrentPromise(lat, long){
 			currentHTML +=		'<p id="currentWindSpeed"><i class="wi wi-strong-wind"></i>   '+apiResponse.currently.windSpeed+' mp/h Wind Speed</p>'
 			currentHTML +=		'<hr>'
 			currentHTML +=	'</div>'
-
 		weatherNode.innerHTML = currentHTML
 	}
 }
 
-function makeHourlyPromise(lat, long){
+function setHourly(lat, long){
 	var url = 'https://api.darksky.net/forecast/'+darkSkyKey+'/'+ lat + ','+ long+'?exclude=[currently,minutely,daily,alerts,flags]&callback=?'
 	var promiseHourly = $.getJSON(url)
-	promiseHourly.then(setHourlyTemp)
+	promiseHourly.then(setHourlyHTML)
 
 	//displays the hourly temperature in a container
-	function setHourlyTemp(apiResponse){
+	function setHourlyHTML(apiResponse){
 		hideLoader()
 		var hourlyHTML = '',
 			weatherNode = document.querySelector('#weatherContainer')
-		console.log(url)
 		function formatTime(str){
 			var strArr = str.split(' ')
 			return strArr[4]
@@ -153,17 +160,17 @@ function makeHourlyPromise(lat, long){
 	}
 }
 
-function makeDailyPromise(lat, long){
+function setDaily(lat, long){
 	var url = 'https://api.darksky.net/forecast/'+darkSkyKey+'/'+ lat + ','+ long+'?exclude=[currently,minutely,hourly,alerts,flags]&callback=?'
 	var promiseDaily = $.getJSON(url)
-	promiseDaily.then(setDailyTemp)
+	promiseDaily.then(hideLoader()).then(setDailyHTML)
 
 	function formatDate(str){
 		var strArr = str.split(' ')
 		return strArr[0]
 	}
 	//displays the weekly temperature in a container
-	function setDailyTemp(apiResponse){
+	function setDailyHTML(apiResponse){
 		hideLoader()
 		var dailyHTML = '',
 			weatherNode = document.querySelector('#weatherContainer')
@@ -186,11 +193,13 @@ function makeDailyPromise(lat, long){
 //Creates a promise to the google maps api and will run a function that changes the hash
 //Also runs the first bg image fetch
 function makeLocationPromise(place){
-	var inputNode = document.querySelector('#inputText')
+	var inputNode = document.querySelector('#inputText'),
+		cityNameNode = document.querySelector('#cityName')
+
+	var url = "http://maps.googleapis.com/maps/api/geocode/json?address="+place,
+		promiseLocation = $.getJSON(url)
 	inputNode.value= ''
-	var url = "http://maps.googleapis.com/maps/api/geocode/json?address="+place
-	var promiseLocation = $.getJSON(url)
-	promiseLocation.then(setCityHTMLHash).then(makeBgPromises(place))
+	promiseLocation.then(setCityHTMLHash).then(displayBackground(place))
 
 	console.log(url)
 	//Sets the hash to given location in the api response
@@ -205,11 +214,12 @@ function makeLocationPromise(place){
 		hashArr[0] = apiResponse.results[0].geometry.location['lat']
 		hashArr[1] = apiResponse.results[0].geometry.location['lng']
 		location.hash = hashArr.join('/')
+		setCityName(hashArr[0],hashArr[1])
 	}
 }
 
 //Requests and sets a picture to the background from the flickr API which should resemble the location taken as input
-function makeBgPromises(place){
+function displayBackground(place){
 	var url = "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key="+flickrKey+"&text="+place+"&sort=relevance&media=photos&extras=url_l&per_page=1&page=1&format=json&nojsoncallback=1"
 	var promiseBG = $.getJSON(url)
 	promiseBG.then(setBGLocation)
@@ -226,86 +236,97 @@ function makeBgPromises(place){
 //displays the loading gif
 function showLoader(){
 	var loadNode = document.querySelector('.sk-cube-grid')
+	var weatherNode = document.querySelector('#weatherContainer')
 	loadNode.style.display = 'block'
+	weatherNode.style.opacity = '0'
 }
 
 //hides the loading gif
 function hideLoader(){
 	var loadNode = document.querySelector('.sk-cube-grid')
+	var weatherNode = document.querySelector('#weatherContainer')
 	loadNode.style.display = 'none'
+	weatherNode.style.opacity = '1'
 }
 
 
 
 //StartButtonEvents wraps all the button events in one function for easier management
 //The hash will be changed to the corresponding button click
-function startButtonEvents(lat,long){
+function startButtonEvents(){
 	var currentButtonNode = document.querySelector('#currentLink')
 		hourlyButtonNode = document.querySelector('#hourlyLink')
 		dailyButtonNode = document.querySelector('#dailyLink')
-	if(lat&&long){
-		hashString = lat + '/' + long
-	}
-	else{return}
+
+	var hashArr = location.hash.split('/')
 	currentButtonNode.addEventListener('click', function(){
-		location.hash = hashString + '/current'
+		showLoader()
+		location.hash = hashArr[0]+'/'+hashArr[1]+'/current'
 	})
 
 	hourlyButtonNode.addEventListener('click', function(){
-		location.hash = hashString + '/hourly'
+		showLoader()
+		location.hash = hashArr[0]+'/'+hashArr[1]+'/hourly'
 	})
 
 	dailyButtonNode.addEventListener('click', function(){
-		location.hash = hashString + '/daily'
+		showLoader()
+		location.hash = hashArr[0]+'/'+hashArr[1]+'/daily'
 	})
 }
 
 //Sets the default hash to the current position and sets default city name
 function setDefault(positionObj){
-	function getLatLong(obj){
-	    var latLongObj = {lat: obj.coords.latitude, long: obj.coords.longitude}
-	    return latLongObj
-	}
-	var latLong = getLatLong(positionObj)
-	location.hash=latLong['lat'] + '/'+ latLong['long'] + '/current'
-	setCityName(latLong['lat'],latLong['long'])
+	hideLoader()
+	var lat = positionObj.coords.latitude,
+		long = positionObj.coords.longitude
+
+	location.hash= lat + '/'+ long + '/current'
+	setCityName(lat,long)
 }
 
-//Reads the hash and is executed when the hash changes
-function hashController(){
-	var hashArr = location.hash.substr(1).split('/'),
-		latitude = hashArr[0],
-		longitude = hashArr[1],
-		menuSelection = hashArr[2]
-	startButtonEvents(latitude,longitude)
-	showLoader()
-	if(latitude&&longitude){
-		setCityName(latitude,longitude)
-	}
-	if(hashArr[0] === 'errorPage'){
-		setCityHTML("Couldn't Find Location")
-		return
-	}
-	else if(menuSelection === 'current'){
-		makeCurrentPromise(latitude,longitude)
-	}
-	else if(menuSelection === 'hourly'){
-		makeHourlyPromise(latitude,longitude)
-	}
-	else if(menuSelection === 'daily'){
-		makeDailyPromise(latitude,longitude)
-	}
-	else{
+//creates a hash router that will 
+var Router = Backbone.Router.extend({
+	routes:{
+		":latitude/:longitude/current": "displayCurrent",
+		":latitude/:longitude/hourly": "displayHourly",
+		":latitude/:longitude/daily": "displayDaily",
+		"errorPage": "displayError",
+		"": "displayDefault"
+	},
+	displayCurrent: function(latitude, longitude){
+		setCurrent(latitude, longitude)
+	},
+	displayHourly: function(latitude, longitude){
+		setHourly(latitude, longitude)
+	},
+	displayDaily: function(latitude, longitude){
+		setDaily(latitude, longitude)
+	},
+	displayError: function(){
+		setCityHTML("Couldn't Find Location!")
+	},
+	displayDefault: function(){
 		navigator.geolocation.getCurrentPosition(setDefault)
 	}
-}
+})
+
+
 
 //Function that contains all the main functions and runs all eventListeners
 function main(){
-	hashController()
-	window.addEventListener('hashchange', hashController)
-	var inputNode = document.querySelector('#inputText')
+	var instance = new Router(),
+		inputNode = document.querySelector('#inputText'),
+		imgContainerNode = document.querySelector('#imgContainer'),
+		cityNameNode = document.querySelector('#cityName')
 
+	if(cityNameNode.innerHTML===''&&imgContainerNode.innerHTML===''){
+		var hashArr = location.hash.substr(1).split('/')
+		setCityName(hashArr[0],hashArr[1])
+	}
+
+	Backbone.history.start()
+	startButtonEvents()
 	inputNode.addEventListener('keydown', function(e){
 		if(e.keyCode==13){
 			showLoader()

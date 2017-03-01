@@ -6,7 +6,7 @@ i{
 	font-family: 'Open Sans', sans-serif;
 }
 body{
-	background: rgba(200,200,200,1);
+	background: rgba(0,0,0,1);
 	margin:0;
 	padding:0;
 	border:0;
@@ -21,7 +21,7 @@ h1{
 .sk-cube-grid {
 	position:fixed;
 	top: 50%;
-	left:50%;
+	left:16.5%;
 	width: 140px;
 	height: 140px;
 	transform: translate(-50%,-50%);
@@ -192,10 +192,13 @@ input:focus::-webkit-input-placeholder{
         opacity: 1;
     }
     100% {
-        transform: scale3d(2, 2, 2) translate3d(-180px, -180px, 0px);
+    	transform: scale3d(2.5, 2.5, 2.5) translate3d(-105px, -105px, 0px);
         opacity: 0;
     }
 }
+
+
+
 
 #weatherContainer{
 	height: 60vh;
